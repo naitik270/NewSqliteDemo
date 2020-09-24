@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.example.myapplication.Classes.ClsRegistrationGetSet;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +19,10 @@ public class DataBaseOperations {
 
     static long rowsDeleted;
 
-
     public DataBaseOperations(Context context) {
         mDbHelper = new DBHelper(context);
         mAppExecutor = new AppExecutor();
     }
-
 
     public void insert(String reg_photo, String reg_name, String reg_phone, String reg_email) {
         mAppExecutor.diskIO().execute(() -> {
@@ -74,6 +71,54 @@ public class DataBaseOperations {
         }
 
         return arrList;
+    }
+
+    public static long deleteRecord(int id) {
+
+        mAppExecutor.diskIO().execute(() -> {
+            SQLiteDatabase db = mDbHelper.getReadableDatabase();
+            String reg_id = RegistrationColumn.ID + "=?";
+            String[] selectionArgs = {String.valueOf(id)};
+            rowsDeleted = db.delete(RegistrationColumn.TABLE_NAME, reg_id, selectionArgs);
+            db.close();
+        });
+
+        return rowsDeleted;
+    }
+
+    public ClsRegistrationGetSet fetchData(int _id) {
+
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        ClsRegistrationGetSet obj = new ClsRegistrationGetSet();
+
+        String[] columns = new String[]{RegistrationColumn._ID, RegistrationColumn.reg_photo,
+                RegistrationColumn.reg_name, RegistrationColumn.reg_phone, RegistrationColumn.reg_email};
+
+        String reg_id = RegistrationColumn.ID + "=?";
+        String[] selectionArgs = {String.valueOf(_id)};
+
+        Cursor cursor = db.query(RegistrationColumn.TABLE_NAME, columns, reg_id,
+                selectionArgs, null, null, null);
+
+        if (cursor.moveToFirst()) {
+            int columnID = cursor.getColumnIndex(RegistrationColumn.ID);
+            int regPhoto = cursor.getColumnIndex(RegistrationColumn.reg_photo);
+            int regName = cursor.getColumnIndex(RegistrationColumn.reg_name);
+            int regPhone = cursor.getColumnIndex(RegistrationColumn.reg_phone);
+            int regEmail = cursor.getColumnIndex(RegistrationColumn.reg_email);
+            do {
+                int id = cursor.getInt(columnID);
+                String photo = cursor.getString(regPhoto);
+                String name = cursor.getString(regName);
+                String phone = cursor.getString(regPhone);
+                String email = cursor.getString(regEmail);
+                obj = new ClsRegistrationGetSet(id, photo, name, phone, email);
+            } while (cursor.moveToNext());
+            cursor.close();
+            db.close();
+        }
+
+        return obj;
     }
 
 
