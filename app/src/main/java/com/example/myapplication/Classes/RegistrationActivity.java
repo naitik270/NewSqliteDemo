@@ -1,11 +1,13 @@
 package com.example.myapplication.Classes;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -41,11 +43,12 @@ public class RegistrationActivity extends AppCompatActivity {
     Button btn_registration;
     DataBaseOperations mDataBaseOperations;
     Boolean imgSelected = false;
+    ClsRegistrationGetSet obj = new ClsRegistrationGetSet();
 
     public static final int PICK_GALLERY = 1;
     private static final int PICK_CAMERA = 2;
     Bitmap bmp;
-
+    int regID = 0;
     public static String[] STORAGE_PERMISSIONS = new String[]{
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -64,6 +67,9 @@ public class RegistrationActivity extends AppCompatActivity {
 
     private void main() {
         mDataBaseOperations = new DataBaseOperations(getApplicationContext());
+        regID = getIntent().getIntExtra("regID", 0);
+        Log.d("--regID--", "regID: " + regID);
+
         edt_name = findViewById(R.id.edt_name);
         edt_number = findViewById(R.id.edt_number);
         edt_email = findViewById(R.id.edt_email);
@@ -71,33 +77,36 @@ public class RegistrationActivity extends AppCompatActivity {
         iv_doc_file = findViewById(R.id.iv_doc_file);
         btn_registration = findViewById(R.id.btn_registration);
 
-        iv_add_img.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectionDialog();
-            }
-        });
+        if (regID != 0) {
+            obj = mDataBaseOperations.fetchData(regID);
 
+            getProfile(obj.getReg_photo());
+            edt_name.setText(obj.getReg_name());
+            edt_number.setText(obj.getReg_phone());
+            edt_email.setText(obj.getReg_email());
+
+        } else {
+            Log.d("--regID--", "ELSEELSE: ");
+        }
+
+        iv_add_img.setOnClickListener(v -> selectionDialog());
         btn_registration.setOnClickListener(v -> {
             boolean val = validation();
 
             if (val) {
-                String fileNameToSaveInDB = saveProfileImage();
+                String fileNameToSaveInDB = String.valueOf(saveProfileImage());
+                Log.d("--regID--", "fileNameToSaveInDB: " + fileNameToSaveInDB);
 
                 String name = edt_name.getText().toString().trim();
                 String number = edt_number.getText().toString().trim();
                 String email = edt_email.getText().toString().trim();
 
                 mDataBaseOperations.insert(fileNameToSaveInDB, name, number, email);
-
-                Log.d("--img--", "fileNameToSaveInDB: " + fileNameToSaveInDB);
-
             }
-
         });
-
     }
 
+    @SuppressLint("DefaultLocale")
     public static String getRandom() {
         String result = "";
         Random random = new Random();
@@ -105,21 +114,33 @@ public class RegistrationActivity extends AppCompatActivity {
         return result;
     }
 
-    private String saveProfileImage() {
+
+    private void getProfile(String path) {
+        File imgFile = new File(path);
+        Log.d("--regID--", "imgFile: " + imgFile);
+
+        if (imgFile.exists()) {
+            Log.d("--regID--", "exists: " + imgFile);
+            bmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+            Log.d("--regID--", "bmp: " + bmp);
+            iv_doc_file.setImageBitmap(bmp);
+        }
+    }
+
+    private File saveProfileImage() {
         File _saveImage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         Log.d("--img--", "filepath: " + _saveImage);
         File dir = new File(_saveImage.getAbsolutePath() + "/MyDemo/");
-        String _filename = "";
+        String _filename = "profile";
         OutputStream output;
 
-        _filename = "profile.jpg";
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        Log.d("--img--", "dir: " + dir);
-        File fileToSave = new File(dir.getAbsolutePath() + "/" + _filename.concat(getRandom()));
-        Log.d("--img--", "fileToSave: " + fileToSave.getAbsolutePath());
 
+        Log.d("--img--", "dir: " + dir);
+        File fileToSave = new File(dir.getAbsolutePath() + "/" + _filename.concat(getRandom()).concat(".jpg"));
+        Log.d("--img--", "fileToSave: " + fileToSave.getAbsolutePath());
 
         try {
             output = new FileOutputStream(fileToSave);
@@ -133,8 +154,7 @@ public class RegistrationActivity extends AppCompatActivity {
             Log.e("--img--", "Exception: " + e.getMessage());
             e.printStackTrace();
         }
-
-        return _filename;
+        return fileToSave;
     }
 
 
