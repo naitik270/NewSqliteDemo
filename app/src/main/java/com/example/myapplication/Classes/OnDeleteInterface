@@ -1,0 +1,5 @@
+package com.example.myapplication.Classes;
+
+public interface OnDeleteInterface {
+    void OnDeleteItemClick(ClsRegistrationGetSet obj, int position);
+}
