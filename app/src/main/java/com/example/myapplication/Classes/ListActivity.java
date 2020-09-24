@@ -48,7 +48,6 @@ public class ListActivity extends AppCompatActivity {
         if (mList.size() > 0) {
             mAdapter = new ListAdapter(ListActivity.this);
             mRv.setAdapter(mAdapter);
-
             mAdapter.AddItems(mList);
 
             mAdapter.SetOnClickListener(obj -> {
@@ -58,6 +57,11 @@ public class ListActivity extends AppCompatActivity {
                 startActivity(intent);
             });
 
+
+            mAdapter.ClickOnDelete((obj, position) -> {
+                DataBaseOperations.deleteRecord(obj.getId());
+                mAdapter.RemoveItem(position);
+            });
         }
 
         Gson gson = new Gson();
