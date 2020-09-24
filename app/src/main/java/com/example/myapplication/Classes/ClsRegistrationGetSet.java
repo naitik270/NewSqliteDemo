@@ -18,7 +18,7 @@ public class ClsRegistrationGetSet {
         this.reg_email = reg_email;
     }
 
-    ClsRegistrationGetSet() {
+    public ClsRegistrationGetSet() {
     }
 
     public int getId() {
